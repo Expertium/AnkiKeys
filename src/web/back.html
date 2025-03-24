@@ -76,6 +76,16 @@
           justify-content: center;
         }
 
+        .key.correct {
+          background-color: #4CAF50;
+          box-shadow: 0 2px 0 #2E7D32;
+        }
+
+        .key.incorrect {
+          background-color: #FA6B84;
+          box-shadow: 0 2px 0 #C62828;
+        }
+
         .unit1 { width: 50px; }
         .unit1-25 { width: 62.5px; }
         .unit1-5 { width: 75px; }
@@ -262,6 +272,17 @@
             if (backElement) {
                 backElement.style.color = result === '1' ? '#90EF90' : '#FA6B84';
             }
+
+            // Update individual key colors based on correctness
+            const correctness = result.split(' ');
+            const keys = document.querySelectorAll('.key.pressed');
+            keys.forEach((key, index) => {
+                if (correctness[index] === 'true') {
+                    key.classList.add('correct');
+                } else {
+                    key.classList.add('incorrect');
+                }
+            });
         });
     })();
 

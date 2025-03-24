@@ -74,6 +74,16 @@
           justify-content: center;
         }
 
+        .key.correct {
+          background-color: #4CAF50;
+          box-shadow: 0 2px 0 #2E7D32;
+        }
+
+        .key.incorrect {
+          background-color: #FA6B84;
+          box-shadow: 0 2px 0 #C62828;
+        }
+
         .unit1 { width: 50px; }
         .unit1-25 { width: 62.5px; }
         .unit1-5 { width: 75px; }
@@ -236,15 +246,20 @@
             };
 
             // Function to highlight a key
-            function highlightKey(code) {
+            function highlightKey(code, isCorrect) {
                 const keyElement = document.querySelector(`.key[data-key="${code}"]`);
                 if (keyElement && !keyElement.classList.contains('pressed')) {
                     pycmd(`ShortcutAddon: AddKey ${code}`, (pressOrder) => {
-													if (pressOrder > 0) {
-                              keyElement.classList.add('pressed');
-                              keyElement.setAttribute('data-order', pressOrder);
-                          }
-                     });
+                        if (pressOrder > 0) {
+                            keyElement.classList.add('pressed');
+                            keyElement.setAttribute('data-order', pressOrder);
+                            if (isCorrect) {
+                                keyElement.classList.add('correct');
+                            } else {
+                                keyElement.classList.add('incorrect');
+                            }
+                        }
+                    });
                 }
             }
 
@@ -253,6 +268,8 @@
                 // Reset HTML
                 keys.forEach(key => {
                     key.classList.remove('pressed');
+                    key.classList.remove('correct');
+                    key.classList.remove('incorrect');
                     key.removeAttribute('data-order');
                 });
 
@@ -267,29 +284,31 @@
 
             // Function to remove the most recently pressed key
             function removeLastKey() {
-        pycmd('ShortcutAddon: RemoveKey', (pressOrder) => {
-            if (pressOrder > -1) {
-                // Find the key with the highest data-order attribute (the most recently pressed key)
-                const lastPressedKey = Array.from(document.querySelectorAll('.key.pressed'))
-                    .reduce((latest, current) => {
-                        const currentOrder = parseInt(current.getAttribute('data-order') || '0');
-                        const latestOrder = parseInt(latest.getAttribute('data-order') || '0');
-                        return currentOrder > latestOrder ? current : latest;
-                    }, document.querySelector('.key.pressed'));
+                pycmd('ShortcutAddon: RemoveKey', (pressOrder) => {
+                    if (pressOrder > -1) {
+                        // Find the key with the highest data-order attribute (the most recently pressed key)
+                        const lastPressedKey = Array.from(document.querySelectorAll('.key.pressed'))
+                            .reduce((latest, current) => {
+                                const currentOrder = parseInt(current.getAttribute('data-order') || '0');
+                                const latestOrder = parseInt(latest.getAttribute('data-order') || '0');
+                                return currentOrder > latestOrder ? current : latest;
+                            }, document.querySelector('.key.pressed'));
 
-                if (lastPressedKey) {
-                    const keyCode = lastPressedKey.getAttribute('data-key');
+                        if (lastPressedKey) {
+                            const keyCode = lastPressedKey.getAttribute('data-key');
 
-                    // If the key is a modifier, update the modifier state
-                    if (modifierState.hasOwnProperty(keyCode)) {
-                        modifierState[keyCode] = false;
+                            // If the key is a modifier, update the modifier state
+                            if (modifierState.hasOwnProperty(keyCode)) {
+                                modifierState[keyCode] = false;
+                            }
+
+                            lastPressedKey.classList.remove('pressed');
+                            lastPressedKey.classList.remove('correct');
+                            lastPressedKey.classList.remove('incorrect');
+                            lastPressedKey.removeAttribute('data-order');
+                        }
                     }
-
-                    lastPressedKey.classList.remove('pressed');
-                    lastPressedKey.removeAttribute('data-order');
-                }
-            }
-        });
+                });
             }
 
             // Listen for keydown events
@@ -315,7 +334,7 @@
 
                         if (!modifierState[event.code]) {
                             modifierState[event.code] = true;
-                            highlightKey(event.code);
+                            highlightKey(event.code, true); // Assume modifier keys are always correct
                         }
                         return;
                     }
@@ -330,23 +349,23 @@
                     // Only highlight modifiers if none of that type are already highlighted
                     if (event.ctrlKey && !isAnyCtrlPressed) {
                         // Prioritize left modifiers for consistency when we can't determine which one
-                        highlightKey('ControlLeft');
+                        highlightKey('ControlLeft', true); // Assume modifier keys are always correct
                     }
 
                     if (event.shiftKey && !isAnyShiftPressed) {
-                        highlightKey('ShiftLeft');
+                        highlightKey('ShiftLeft', true); // Assume modifier keys are always correct
                     }
 
                     if (event.altKey && !isAnyAltPressed) {
-                        highlightKey('AltLeft');
+                        highlightKey('AltLeft', true); // Assume modifier keys are always correct
                     }
 
                     if (event.metaKey && !isAnyMetaPressed) {
-                        highlightKey('MetaLeft');
+                        highlightKey('MetaLeft', true); // Assume modifier keys are always correct
                     }
 
                     // Finally highlight the actual key
-                    highlightKey(event.code);
+                    highlightKey(event.code, true); // Assume regular keys are correct for now
                 });
 
                 document.addEventListener('keyup', function(event) {

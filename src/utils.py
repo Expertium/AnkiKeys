@@ -4,12 +4,15 @@ def is_correct(keys):
     try:
         answer = mw.reviewer.card.note()["Back"]
     except:
-        return "0"
+        return [False] * len(keys)
 
     given = " ".join(keys)
 
-    # Normalize and compare the two formats
-    return str(int(parse_human_format(answer) == parse_js_format(given)))
+    expected_keys = parse_human_format(answer)
+    given_keys = parse_js_format(given)
+
+    correctness = [expected == given for expected, given in zip(expected_keys, given_keys)]
+    return correctness
 
 
 def parse_human_format(text):
@@ -24,7 +27,7 @@ def parse_human_format(text):
         if normalized_key:
             normalized_combination.append(normalized_key)
 
-    return " ".join(normalized_combination)
+    return normalized_combination
 
 
 def normalize_human_key(key):
@@ -147,4 +150,4 @@ def parse_js_format(text):
         else:
             normalized_keys.append(key)
 
-    return " ".join(normalized_keys)
+    return normalized_keys
